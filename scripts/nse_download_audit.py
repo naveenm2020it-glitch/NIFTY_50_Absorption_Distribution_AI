@@ -129,6 +129,6 @@ def main():
     out.mkdir(exist_ok=True)
     (out/"manifest.json").write_text(json.dumps(manifest,indent=2,ensure_ascii=False),encoding="utf-8")
     print(json.dumps({"status":manifest["status"],"downloaded":len(manifest["files"]),"failed":len(errors),"manifest":str(out/"manifest.json")},indent=2))
-    return 0 if manifest["files"] else 2
+    return 0 if manifest["status"] == "PASS" else (1 if manifest["status"] == "PARTIAL" else 2)
 
 if __name__=="__main__": sys.exit(main())
