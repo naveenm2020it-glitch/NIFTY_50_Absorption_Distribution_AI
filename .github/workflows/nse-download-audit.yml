@@ -1,5 +1,11 @@
 name: NSE F&O download and audit
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/nse_download_audit.py'
+      - 'scripts/nse_market_activity_ui_download.py'
+      - '.github/workflows/nse-download-audit.yml'
   schedule:
     - cron: "0 14 * * 1-5"
   workflow_dispatch:
