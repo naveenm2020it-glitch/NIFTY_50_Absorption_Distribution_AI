@@ -22,8 +22,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install downloader dependency
-        run: python -m pip install --upgrade requests
+      - name: Install downloader dependencies
+        run: |
+          python -m pip install --upgrade requests playwright
+          python -m playwright install --with-deps chromium
       - name: Resolve NSE trading date
         id: date
         run: |
@@ -32,7 +34,12 @@ jobs:
           else
             echo "trade_date=$(date -u -d '1 day ago' +%F)" >> "$GITHUB_OUTPUT"
           fi
-      - name: Download and audit NSE reports
+      - name: Download F&O Market Activity through official NSE webpage
+        id: market_activity
+        continue-on-error: true
+        run: |
+          python scripts/nse_market_activity_ui_download.py --date "${{ steps.date.outputs.trade_date }}" --out audit-output
+      - name: Download and audit other NSE reports
         id: audit
         continue-on-error: true
         run: |
@@ -45,6 +52,6 @@ jobs:
           path: audit-output/
           if-no-files-found: warn
           retention-days: 7
-      - name: Fail job if no reports were downloaded
-        if: steps.audit.outcome == 'failure'
+      - name: Fail job if any required download failed
+        if: steps.audit.outcome == 'failure' || steps.market_activity.outcome == 'failure'
         run: exit 1
