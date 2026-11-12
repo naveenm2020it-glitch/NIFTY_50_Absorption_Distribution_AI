@@ -51,7 +51,6 @@ def main():
         parser=Anchors(); parser.feed(page.text)
         # Official report catalogue links are preferred. The archive patterns are fallback candidates only.
         wanted=[
-          ("market_activity",f"fo{ddmmyyyy}.zip",f"fo{ddmmyyyy}.zip"),
           ("udiff_fo_bhavcopy",f"BhavCopy_NSE_FO_0_0_0_{ymd}_F_0000.csv.zip",f"BhavCopy_NSE_FO_0_0_0_{ymd}_F_0000.csv.zip"),
           ("participant_oi",f"fao_participant_oi_{ddmmyyyy}.csv",f"fao_participant_oi_{ddmmyyyy}.csv"),
           ("participant_volume",f"fao_participant_vol_{ddmmyyyy}.csv",f"fao_participant_vol_{ddmmyyyy}.csv"),
