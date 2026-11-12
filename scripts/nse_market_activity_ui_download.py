@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Download NSE F&O Market Activity through the official report-page UI."""
 from __future__ import annotations
-import argparse, hashlib, json, re, sys, zipfile
+import argparse, csv, hashlib, json, re, sys, zipfile
 from datetime import datetime
 from pathlib import Path
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
@@ -161,14 +161,44 @@ def main() -> int:
                 raise RuntimeError("NSE download event completed but output file is empty")
             if not zipfile.is_zipfile(target):
                 raise RuntimeError("Downloaded file is not a ZIP archive")
+            extract_root = out / "extracted" / "market_activity"
+            extract_root.mkdir(parents=True, exist_ok=True)
             with zipfile.ZipFile(target) as zf:
                 bad = zf.testzip()
                 if bad:
                     raise RuntimeError(f"ZIP integrity failure in member {bad}")
-                members = [{"name":x.filename,"size":x.file_size} for x in zf.infolist() if not x.is_dir()]
+                members = []
+                csv_checks = []
+                for item in zf.infolist():
+                    if item.is_dir():
+                        continue
+                    destination = (extract_root / item.filename).resolve()
+                    if extract_root.resolve() not in destination.parents:
+                        raise RuntimeError(f"Unsafe ZIP member path: {item.filename}")
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    with zf.open(item) as src, destination.open("wb") as dst:
+                        while True:
+                            chunk = src.read(1024 * 1024)
+                            if not chunk:
+                                break
+                            dst.write(chunk)
+                    members.append({"name":item.filename,"size":item.file_size,"sha256":sha256(destination)})
+                    if destination.suffix.lower() == ".csv":
+                        with destination.open("r", encoding="utf-8-sig", errors="replace", newline="") as stream:
+                            sample = stream.read(8192)
+                            stream.seek(0)
+                            try:
+                                dialect = csv.Sniffer().sniff(sample, delimiters=",;|\\t")
+                            except csv.Error:
+                                dialect = csv.excel
+                            reader = csv.reader(stream, dialect)
+                            header = next(reader, [])
+                            rows = sum(1 for _ in reader)
+                        csv_checks.append({"file":item.filename,"header":header,"data_rows":rows})
             evidence.update({
                 "status":"DOWNLOADED", "filename":target.name, "bytes":target.stat().st_size,
-                "sha256":sha256(target), "zip_integrity":"PASS", "members":members
+                "sha256":sha256(target), "zip_integrity":"PASS", "members":members,
+                "csv_inspections":csv_checks
             })
         except Exception as exc:
             evidence.update({"status":"FAILED","error":str(exc)})
