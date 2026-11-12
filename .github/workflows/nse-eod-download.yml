@@ -61,6 +61,11 @@ jobs:
           from urllib.error import URLError, HTTPError
 
           trade_date = date.fromisoformat(os.environ["TRADE_DATE"])
+          date_tokens = {
+              trade_date.strftime("%d%m%Y"),
+              trade_date.strftime("%Y%m%d"),
+              trade_date.strftime("%d-%b-%Y").upper(),
+          }
           out = Path("nse-eod")
           raw, extracted = out / "raw", out / "extracted"
           raw.mkdir(parents=True, exist_ok=True)
@@ -86,6 +91,9 @@ jobs:
               parsed = urlparse(url)
               if parsed.scheme != "https" or not (parsed.hostname or "").lower().endswith("nseindia.com"):
                   fail(f"{name}: URL must be HTTPS on an NSE-owned nseindia.com host")
+              url_path = urlparse(url).path.upper()
+              if not any(token in url_path for token in date_tokens):
+                  fail(f"{name}: URL filename does not contain the requested trade date {trade_date}; refusing an unverified date")
               path = raw / (name + (".zip" if expected == "zip" else ".csv"))
               last_error = None
               for attempt in range(1, 5):
@@ -187,6 +195,7 @@ jobs:
                       "file": str(path),
                       "bytes": len(data),
                       "sha256": hashlib.sha256(data).hexdigest(),
+                      "date_token_verified_in_url": True,
                       "status": "DOWNLOADED"
                   })
                   if kind == "zip":
