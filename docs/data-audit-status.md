@@ -1,6 +1,6 @@
 # NIFTY 50 Absorption & Distribution AI — Data Audit Status
 
-**Status:** Preliminary source inventory; raw-file verification is pending.  
+**Status:** Partial raw-file verification completed for 11-Nov-2026; three report downloads remain unavailable.  
 **Audit date:** 2026-11-12  
 **Scope:** NIFTY 50 only. This document does not claim that any source is licensed for automated collection, redistribution, or commercial use.
 
@@ -92,17 +92,40 @@ Before building a collector or displaying NSE data publicly, review current NSE 
 
 Terms page: https://www.nseindia.com/terms-of-use
 
-## 8. Raw-file verification checklist — NOT YET COMPLETED
+## 8. Raw-file verification — 11-Nov-2026 (PARTIAL)
 
-- [ ] Download one dated F&O Market Activity ZIP from the official NSE page.
-- [ ] Record exact download URL, date, file size, and checksum.
-- [ ] List ZIP members and inspect CSV headers and sample rows.
-- [ ] Confirm whether NIFTY rows exist in index futures/options files.
-- [ ] Download same-date F&O UDiFF Bhavcopy ZIP.
-- [ ] Inspect fields for instrument, symbol, expiry, strike, option type, OHLC, volume, OI, and change in OI where present.
-- [ ] Inspect participant OI/volume and FII XLS headers and units.
-- [ ] Compare selected values with the corresponding official NSE report pages.
-- [ ] Record missing dates, duplicate rows, nulls, schema changes, and corrections.
-- [ ] Verify terms for automated access, storage, and redistribution separately.
+### Successfully downloaded and inspected
 
-**No raw NSE ZIP/CSV has been successfully downloaded and inspected as part of this audit entry. No model, scraper, or webpage has been created.**
+- Report: F&O UDiFF Common Bhavcopy Final (ZIP)
+- Official archive URL: https://nsearchives.nseindia.com/content/fo/BhavCopy_NSE_FO_0_0_0_20261111_F_0000.csv.zip
+- HTTP status: 200
+- ZIP size: 1,359,173 bytes
+- ZIP integrity: PASS
+- Extracted CSV: 42,331 data rows
+- NIFTY rows: 2,245 (instrument types IDF and IDO)
+- Trade date in rows: 2026-11-11
+- ZIP SHA-256: e7ab0ec53ac7b3bb7bcf36b575ca06ca290b8a0c699deab9231c22b34bd296c2
+- Extracted CSV SHA-256: 1104e45784774307e73934320e955bb6e6f94a643f63fbe56e6d83034e73370b
+
+Observed fields include trade date, instrument type, symbol, expiry, strike, option type, OHLC, previous close, underlying price, settlement price, open interest, change in open interest, total traded volume, turnover and number of trades. This is EOD derivatives data, not intraday order-book data.
+
+### Three reports not downloaded
+
+The 11-Nov-2026 pilot attempted these official archive filename patterns; each returned HTTP 404 at the time of the run:
+
+- F&O Market Activity ZIP: `fo11112026.zip`
+- Participant-wise Open Interest: `fao_participant_oi_11112026.csv`
+- Participant-wise Trading Volumes: `fao_participant_vol_11112026.csv`
+
+The corresponding candidate paths were tested under the NSE F&O archive and did not return files. These reports are marked **NOT DOWNLOADED / UNVERIFIED**, not assumed absent permanently. Re-check the official report catalogue for delayed publication or changed paths before any later attempt.
+
+### Remaining verification checklist
+
+- [ ] Re-check the official catalogue for the three missing 11-Nov reports and obtain their actual download links if published.
+- [ ] Download and inspect the Market Activity ZIP; verify its actual member filenames and NIFTY coverage.
+- [ ] Download and inspect participant OI and participant volume CSVs; confirm headers, units and category definitions.
+- [ ] Compare selected records against official NSE report displays.
+- [ ] Record missing dates, duplicates, nulls, schema changes and corrections.
+- [ ] Verify terms for automated access, storage and redistribution separately.
+
+**Pilot outcome: PARTIAL — 1 of 4 reports downloaded and validated. No model or public webpage has been created. Automated collection remains paused pending confirmation of NSE terms/permission.**
