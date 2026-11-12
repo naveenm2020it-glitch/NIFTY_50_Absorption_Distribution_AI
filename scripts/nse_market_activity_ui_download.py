@@ -99,7 +99,11 @@ def main() -> int:
             chosen.fill(date_value)
             chosen.dispatch_event("input")
             chosen.dispatch_event("change")
-            page.wait_for_timeout(3500)
+            page.wait_for_timeout(5000)
+            expected_heading = f"Reports for {day:%d-%b-%Y}"
+            if expected_heading.lower() not in (page.locator('body').inner_text(timeout=20000)).lower():
+                raise RuntimeError(f"NSE page did not confirm requested date heading: {expected_heading}")
+            evidence["confirmed_date_heading"] = expected_heading
 
             # Confirm the selected report exists in the requested date's report list.
             report_locator = page.get_by_text(REPORT, exact=True).first
