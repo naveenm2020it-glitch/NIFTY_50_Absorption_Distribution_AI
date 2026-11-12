@@ -1,63 +1,19 @@
 name: NSE F&O download and audit
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'scripts/nse_download_audit.py'
-      - 'scripts/nse_market_activity_ui_download.py'
-      - '.github/workflows/nse-download-audit.yml'
-  schedule:
-    - cron: "0 14 * * 1-5"
   workflow_dispatch:
     inputs:
       trade_date:
-        description: "NSE trading date (YYYY-MM-DD), e.g. 2026-11-11"
+        description: "NSE trading date (YYYY-MM-DD)"
         required: true
         type: string
 permissions:
   contents: read
-  actions: write
 jobs:
   download-audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Install downloader dependencies
+      - name: Explain why automated NSE collection is paused
         run: |
-          python -m pip install --upgrade requests playwright
-          python -m playwright install --with-deps chromium
-      - name: Resolve NSE trading date
-        id: date
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "trade_date=${{ inputs.trade_date }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "trade_date=$(date -u -d '1 day ago' +%F)" >> "$GITHUB_OUTPUT"
-          fi
-      - name: Download F&O Market Activity through official NSE webpage
-        id: market_activity
-        continue-on-error: true
-        run: |
-          python scripts/nse_market_activity_ui_download.py --date "${{ steps.date.outputs.trade_date }}" --out audit-output
-      - name: Download and audit other NSE reports
-        id: audit
-        continue-on-error: true
-        run: |
-          python scripts/nse_download_audit.py --date "${{ steps.date.outputs.trade_date }}" --out audit-output
-      - name: Upload raw files and audit manifest
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: nse-audit-${{ steps.date.outputs.trade_date }}
-          path: audit-output/
-          if-no-files-found: warn
-          retention-days: 7
-      - name: Fail job if any required download failed
-        if: steps.audit.outcome == 'failure' || steps.market_activity.outcome == 'failure'
-        run: exit 1
+          echo "Automated NSE website collection is paused pending express written permission from NSE."
+          echo "Use the official NSE report page manually for individual downloads."
+          echo "Do not run scripted or scheduled collection unless NSE permission is obtained."
