@@ -74,7 +74,6 @@ def main() -> int:
 
             # Find the report's date input by searching inputs whose nearby parent
             # text includes both the report area and the Date label.
-            date_locator = page.locator("input").filter(has=page.locator(":scope"))
             date_candidates = page.locator("input")
             chosen = None
             for i in range(await_count(date_candidates)):
@@ -129,7 +128,7 @@ def main() -> int:
             page.wait_for_timeout(500)
 
             # Click the Multiple file Download control in the same report group.
-            download_button = page.get_by_text("Multiple file Download", exact=True).filter(has=page.locator(":scope"))
+            download_button = page.get_by_text("Multiple file Download", exact=True)
             button_count = await_count(download_button)
             clicked = False
             for i in range(button_count):
