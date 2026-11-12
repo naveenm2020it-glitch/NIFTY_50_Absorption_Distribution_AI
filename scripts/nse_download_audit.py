@@ -70,8 +70,19 @@ def main():
             saved=None; last_error=None
             for url in candidates:
                 try:
-                    r=s.get(url,headers={"Referer":REPORT_PAGE},timeout=90,stream=True)
-                    if r.status_code != 200: raise RuntimeError(f"HTTP {r.status_code} for {url}")
+                    # Market Activity is an end-of-day archive; NSE may publish it later.
+                    attempts = 6 if key == "market_activity" else 2
+                    r = None
+                    for attempt in range(attempts):
+                        r = s.get(url, headers={"Referer": REPORT_PAGE}, timeout=90, stream=True)
+                        if r.status_code == 200:
+                            break
+                        status = r.status_code
+                        r.close()
+                        if status == 404 and attempt < attempts - 1 and key == "market_activity":
+                            time.sleep(60)
+                            continue
+                        raise RuntimeError(f"HTTP {status} for {url} (attempt {attempt + 1}/{attempts})")
                     ct=r.headers.get("Content-Type","").lower()
                     first=next(r.iter_content(64*1024),b"")
                     if not first: raise RuntimeError("empty response")
