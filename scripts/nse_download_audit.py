@@ -10,6 +10,7 @@ import requests
 
 BASE = "https://www.nseindia.com"
 ARCHIVE = "https://nsearchives.nseindia.com/content/fo/"
+ARCHIVES_HOSTS = ("https://nsearchives.nseindia.com", "https://archives.nseindia.com")
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36"
 REPORT_PAGE = BASE + "/all-reports-derivatives"
 
@@ -57,7 +58,15 @@ def main():
         ]
         for key,filename,fallback in wanted:
             matches=[urljoin(REPORT_PAGE,h) for label,h in parser.items if filename.lower() in (label+" "+h).lower()]
-            candidates=matches or [urljoin(ARCHIVE,fallback)]
+            # Participant reports are stored under /content/nsccl/, not /content/fo/.
+            if matches:
+                candidates = matches
+            elif key in ("participant_oi", "participant_volume"):
+                candidates = [f"{host}/content/nsccl/{filename}" for host in ARCHIVES_HOSTS]
+            elif key == "market_activity":
+                candidates = [f"{host}/content/fo/{filename}" for host in ARCHIVES_HOSTS]
+            else:
+                candidates = [f"{host}/content/fo/{filename}" for host in ARCHIVES_HOSTS]
             saved=None; last_error=None
             for url in candidates:
                 try:
